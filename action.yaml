@@ -52,36 +52,48 @@ runs:
         KEY_PWD: ${{ inputs.key-pwd }}
         KEYSTORE_PWD: ${{ inputs.keystore-pwd }}
       run: |
-        FLAVOR=""
+        FLAVOR_OPTIONS=""
         if [ -n "${{ inputs.flavor }}" ]; then
-          FLAVOR="--flavor=${{ inputs.flavor }} --dart-define=app.flavor=${{ inputs.flavor }}"
+          FLAVOR_OPTIONS="--flavor=${{ inputs.flavor }} --dart-define=app.flavor=${{ inputs.flavor }}"
         fi
 
         if [ ${{ inputs.release }} = "true" ]; then
 
           if [ ${{ inputs.build-type }} = "apk" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            flutter build apk $FLAVOR || true
+            flutter build apk $FLAVOR_OPTIONS || true
           fi
           if [ ${{ inputs.build-type }} = "aab" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            flutter build appbundle $FLAVOR || true
+            flutter build appbundle $FLAVOR_OPTIONS || true
           fi
 
         else
 
           if [ ${{ inputs.build-type }} = "apk" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            flutter build apk --debug $FLAVOR || true
+            flutter build apk --debug $FLAVOR_OPTIONS || true
           fi
           if [ ${{ inputs.build-type }} = "aab" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            flutter build appbundle --debug $FLAVOR || true
+            flutter build appbundle --debug $FLAVOR_OPTIONS || true
           fi
         fi
       shell: bash
     - run: |
+        BUILD_OUTPUT_PATH="build/app/outputs"
+        if [ -n "${{ inputs.flavor }}" ]; then
+          APK_DEBUG_PATH="$BUILD_OUTPUT_PATH/apk/${{ inputs.flavor }}/debug"
+          APK_RELEASE_PATH="$BUILD_OUTPUT_PATH/apk/${{ inputs.flavor }}/release"
+          AAB_DEBUG_PATH="$BUILD_OUTPUT_PATH/bundle/${{ inputs.flavor }}Debug"
+          AAB_RELEASE_PATH="$BUILD_OUTPUT_PATH/bundle/${{ inputs.flavor }}Release"
+        else
+          APK_DEBUG_PATH="$BUILD_OUTPUT_PATH/apk/debug"
+          APK_RELEASE_PATH="$BUILD_OUTPUT_PATH/apk/release"
+          AAB_DEBUG_PATH="$BUILD_OUTPUT_PATH/bundle/debug"
+          AAB_RELEASE_PATH="$BUILD_OUTPUT_PATH/bundle/release"
+        fi
 
         if [ ${{ inputs.release }} = "true" ]; then
 
           if [ ${{ inputs.build-type }} = "apk" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            APK_PATH=build/app/outputs/apk/release/`ls build/app/outputs/apk/release | grep apk`
+            APK_PATH="$APK_RELEASE_PATH/$(ls $APK_RELEASE_PATH | grep apk)"
             if [ ! -f $APK_PATH ]; then
               exit 1
             fi
@@ -89,7 +101,7 @@ runs:
           fi
 
           if [ ${{ inputs.build-type }} = "aab" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            AAB_PATH=build/app/outputs/bundle/release/`ls build/app/outputs/bundle/release | grep aab`
+            AAB_PATH="$AAB_RELEASE_PATH/$(ls $AAB_RELEASE_PATH | grep aab)"
             if [ ! -f $AAB_PATH ]; then
               exit 1
             fi
@@ -99,7 +111,7 @@ runs:
         else
 
           if [ ${{ inputs.build-type }} = "apk" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            APK_PATH=build/app/outputs/apk/debug/`ls build/app/outputs/apk/debug | grep apk`
+            APK_PATH="$APK_DEBUG_PATH/$(ls $APK_DEBUG_PATH | grep apk)"
             if [ ! -f $APK_PATH ]; then
               exit 1
             fi
@@ -107,7 +119,7 @@ runs:
           fi
 
           if [ ${{ inputs.build-type }} = "aab" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            AAB_PATH=build/app/outputs/bundle/debug/`ls build/app/outputs/bundle/debug | grep aab`
+            AAB_PATH="$AAB_DEBUG_PATH/$(ls $AAB_DEBUG_PATH | grep aab)"
             if [ ! -f $AAB_PATH ]; then
               exit 1
             fi
