@@ -26,6 +26,10 @@ inputs:
     description: 'key password, required if release is true'
     required: false
     default: ''
+  flavor:
+    required: false
+    default: ''
+    description: 'flavor for build'
 
 outputs:
   apk-path:
@@ -48,22 +52,27 @@ runs:
         KEY_PWD: ${{ inputs.key-pwd }}
         KEYSTORE_PWD: ${{ inputs.keystore-pwd }}
       run: |
+        FLAVOR=""
+        if [ -n "${{ inputs.flavor }}" ]; then
+          FLAVOR="--flavor=${{ inputs.flavor }} --dart-define=app.flavor=${{ inputs.flavor }}"
+        fi
+
         if [ ${{ inputs.release }} = "true" ]; then
 
           if [ ${{ inputs.build-type }} = "apk" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            flutter build apk || true
+            flutter build apk $FLAVOR || true
           fi
           if [ ${{ inputs.build-type }} = "aab" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            flutter build appbundle || true
+            flutter build appbundle $FLAVOR || true
           fi
 
         else
 
           if [ ${{ inputs.build-type }} = "apk" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            flutter build apk --debug || true
+            flutter build apk --debug $FLAVOR || true
           fi
           if [ ${{ inputs.build-type }} = "aab" ] || [ ${{ inputs.build-type }} = "both" ]; then
-            flutter build appbundle --debug || true
+            flutter build appbundle --debug $FLAVOR || true
           fi
         fi
       shell: bash
